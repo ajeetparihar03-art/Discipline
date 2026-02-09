@@ -49,7 +49,14 @@ input, button {
 </head>
 
 <body>
-
+<!-- Monthly Progress Bar -->
+<div id="monthBar" style="
+  display:flex;
+  gap:4px;
+  margin-bottom:15px;
+  overflow-x:auto;
+">
+</div>
 <div id="left">
   <h3>Select Date</h3>
   <input type="date" id="date">
@@ -125,9 +132,52 @@ function render(){
     b.classList.toggle("filled", i < tasks.filter(x=>x.done).length);
   });
 }
-
+renderMonthBar();
 dateInput.onchange=render;
-render();
+render();function renderMonthBar() {
+  const bar = document.getElementById("monthBar");
+  if (!bar) return;
+
+  bar.innerHTML = "";
+
+  const selectedDate = new Date(dateInput.value);
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+    const dateKey =
+      year +
+      "-" +
+      String(month + 1).padStart(2, "0") +
+      "-" +
+      String(dayNum).padStart(2, "0");
+
+    const tasks = store[dateKey] || [];
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+
+    const percent = total === 0 ? 0 : done / total;
+
+    const block = document.createElement("div");
+    block.style.width = "16px";
+    block.style.height = "16px";
+    block.style.borderRadius = "4px";
+    block.style.border = "1px solid #ccc";
+    block.style.background = `rgba(46, 204, 113, ${percent})`;
+    block.style.cursor = "pointer";
+
+    block.title = `${dateKey}: ${Math.round(percent * 100)}%`;
+
+    block.onclick = () => {
+      dateInput.value = dateKey;
+      render();
+    };
+
+    bar.appendChild(block);
+  }
+}
 </script>
 
 </body>
