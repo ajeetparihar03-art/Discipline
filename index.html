@@ -1,1 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Discipline Builder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  margin:0;
+  padding:15px;
+  display:flex;
+}
+#left { width:60%; }
+#right { width:40%; display:flex; justify-content:center; align-items:center; }
+
+input, button {
+  padding:6px;
+  margin:4px 0;
+}
+
+.task {
+  background:#fff;
+  padding:8px;
+  margin:5px 0;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+}
+.task span { flex:1; margin-left:8px; }
+.delete { color:red; margin-left:8px; cursor:pointer; }
+
+#building {
+  width:120px;
+  height:300px;
+  border:3px solid #777;
+  display:flex;
+  flex-direction:column-reverse;
+  background:rgba(0,0,0,0.05);
+}
+.block {
+  height:10%;
+  border-top:1px solid #aaa;
+}
+.filled { background:#2ecc71; }
+</style>
+</head>
+
+<body>
+
+<div id="left">
+  <h3>Select Date</h3>
+  <input type="date" id="date">
+
+  <h3>Add Task</h3>
+  <input type="text" id="text" placeholder="Enter task">
+  <button onclick="addTask()">Add</button>
+
+  <h3>Tasks</h3>
+  <div id="tasks"></div>
+</div>
+
+<div id="right">
+  <div id="building"></div>
+</div>
+
+<script>
+let store = JSON.parse(localStorage.getItem("disciplineData")) || {};
+const dateInput = document.getElementById("date");
+const taskBox = document.getElementById("tasks");
+const building = document.getElementById("building");
+
+dateInput.value = new Date().toISOString().split("T")[0];
+
+for(let i=0;i<10;i++){
+  let b=document.createElement("div");
+  b.className="block";
+  building.appendChild(b);
+}
+
+function save(){
+  localStorage.setItem("disciplineData",JSON.stringify(store));
+}
+
+function day(){
+  const d=dateInput.value;
+  if(!store[d]) store[d]=[];
+  return store[d];
+}
+
+function addTask(){
+  const t=document.getElementById("text").value;
+  if(!t) return;
+  day().push({id:Date.now(),text:t,done:false});
+  document.getElementById("text").value="";
+  save(); render();
+}
+
+function toggle(id){
+  day().forEach(x=>{if(x.id===id) x.done=!x.done});
+  save(); render();
+}
+
+function del(id){
+  store[dateInput.value]=day().filter(x=>x.id!==id);
+  save(); render();
+}
+
+function render(){
+  taskBox.innerHTML="";
+  const tasks=day();
+  tasks.forEach(t=>{
+    const d=document.createElement("div");
+    d.className="task";
+    d.innerHTML=`
+      <input type="checkbox" ${t.done?"checked":""} onchange="toggle(${t.id})">
+      <span>${t.text}</span>
+      <span class="delete" onclick="del(${t.id})">✖</span>`;
+    taskBox.appendChild(d);
+  });
+
+  document.querySelectorAll(".block").forEach((b,i)=>{
+    b.classList.toggle("filled", i < tasks.filter(x=>x.done).length);
+  });
+}
+
+dateInput.onchange=render;
+render();
+</script>
+
+</body>
+</html>
